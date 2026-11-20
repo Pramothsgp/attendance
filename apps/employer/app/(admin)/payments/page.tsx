@@ -1,8 +1,9 @@
 import { isMonth, money, today, shortDate } from "@repo/data/pay";
 import { paymentsIn, summaries } from "@repo/data/payroll";
-import { Input, Label, MonthNav, Panel, Picker } from "@repo/ui";
+import { MonthNav, Panel } from "@repo/ui";
 import { addPayment, deletePayment } from "@/app/actions";
-import { ConfirmButton, SubmitButton } from "@/components/client";
+import { ConfirmButton } from "@/components/client";
+import { PaymentForm } from "@/components/payment-form";
 
 const TYPE_STYLE = {
   salary: "bg-secondary text-secondary-foreground",
@@ -22,51 +23,12 @@ export default async function Payments({ searchParams }: { searchParams: Promise
     <>
       <h1 className="text-2xl font-bold">Pay someone</h1>
       <Panel>
-        <form action={addPayment} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="employeeId">Who</Label>
-            <Picker
-              id="employeeId"
-              name="employeeId"
-              required
-              defaultValue={preselect}
-              placeholder="Choose a person"
-              options={people.map((p) => ({
-                value: String(p.id),
-                label: p.name,
-                hint: p.balance >= 0 ? `${money(p.balance)} to pay` : `${money(-p.balance)} paid ahead`,
-              }))}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="amount">Amount (₹)</Label>
-            <Input id="amount" name="amount" type="number" inputMode="decimal" min="0.01" step="0.01" required className="h-11 text-base" />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="type">Type</Label>
-            <Picker
-              id="type"
-              name="type"
-              defaultValue="salary"
-              options={[
-                { value: "salary", label: "Salary" },
-                { value: "advance", label: "Advance or loan" },
-                { value: "bonus", label: "Bonus" },
-              ]}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="day">Date</Label>
-            <Input id="day" name="day" type="date" required defaultValue={today()} className="h-11 text-base" />
-          </div>
-          <div className="space-y-1.5 sm:col-span-2 lg:col-span-2">
-            <Label htmlFor="note">Note</Label>
-            <Input id="note" name="note" maxLength={200} placeholder="Optional" className="h-11 text-base" />
-          </div>
-          <SubmitButton size="lg" className="self-end rounded-xl">
-            Save payment
-          </SubmitButton>
-        </form>
+        <PaymentForm
+          people={people.map((p) => ({ id: p.id, name: p.name, balance: p.balance }))}
+          preselect={preselect ? Number(preselect) : undefined}
+          today={today()}
+          action={addPayment}
+        />
         <p className="mt-3 text-xs text-muted-foreground">
           Salary and advances count against what someone has earned, with no limit. Paying more than earned leaves them paid
           ahead, and later work pays it off. Bonus is extra and doesn&apos;t change what they&apos;re owed.
