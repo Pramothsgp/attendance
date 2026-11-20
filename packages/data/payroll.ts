@@ -1,8 +1,8 @@
 // Read queries shared by the employer and employee apps.
-import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, gte, lte, sql } from "drizzle-orm";
 import { db } from "./client.ts";
 import { monthRange, type PayType } from "./pay.ts";
-import { attendance, employee, payment } from "./schema/index.ts";
+import { attendance, employee, payment, user } from "./schema/index.ts";
 
 const MAX_EMPLOYEES = 1000;
 const MAX_ROWS = 1000;
@@ -91,8 +91,14 @@ export async function summaries(month: string, employeeId?: number): Promise<Emp
   });
 }
 
+/** Everyone, working first, with the email of the login linked to them (if any). */
 export function listEmployees() {
-  return db.select().from(employee).orderBy(desc(employee.active), asc(employee.name)).limit(MAX_EMPLOYEES);
+  return db
+    .select({ ...getTableColumns(employee), email: user.email })
+    .from(employee)
+    .leftJoin(user, eq(user.id, employee.userId))
+    .orderBy(desc(employee.active), asc(employee.name))
+    .limit(MAX_EMPLOYEES);
 }
 
 export function activeEmployees() {

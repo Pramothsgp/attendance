@@ -141,7 +141,7 @@ export async function deletePayment(form: FormData) {
   done();
 }
 
-/** Links a sign-in account to an employee (empty employeeId unlinks it). */
+/** Links a sign-in account to an employee (employeeId "none" unlinks it). */
 export async function linkUser(form: FormData) {
   await guard();
   const userId = text(form, "userId", 100);
@@ -149,7 +149,7 @@ export async function linkUser(form: FormData) {
   const target = form.get("employeeId");
   await db.transaction(async (tx) => {
     await tx.update(employee).set({ userId: null }).where(eq(employee.userId, userId));
-    if (target) await tx.update(employee).set({ userId }).where(eq(employee.id, id(target)));
+    if (target && target !== "none") await tx.update(employee).set({ userId }).where(eq(employee.id, id(target)));
   });
   done();
 }

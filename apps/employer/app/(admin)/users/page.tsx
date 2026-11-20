@@ -1,7 +1,7 @@
 import { SignOutButton } from "@repo/auth/components";
 import { requireAdmin } from "@repo/auth/next";
 import { listEmployees } from "@repo/data/payroll";
-import { Button, cn, NativeSelect, Panel } from "@repo/ui";
+import { Button, cn, Panel, Picker } from "@repo/ui";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { linkUser, setRole } from "@/app/actions";
@@ -59,16 +59,21 @@ export default async function Users({ searchParams }: { searchParams: Promise<{ 
               </div>
               <form action={linkUser} className="flex gap-2">
                 <input type="hidden" name="userId" value={u.id} />
-                <NativeSelect name="employeeId" defaultValue={linked?.id ?? ""} aria-label={`Person linked to ${u.email}`} className="flex-1">
-                  <option value="">Not linked to anyone</option>
-                  {people.map((p) => (
-                    <option key={p.id} value={p.id} disabled={Boolean(p.userId && p.userId !== u.id)}>
-                      {p.name}
-                      {p.userId && p.userId !== u.id ? " (linked to someone else)" : ""}
-                      {p.active ? "" : " (switched off)"}
-                    </option>
-                  ))}
-                </NativeSelect>
+                <Picker
+                  name="employeeId"
+                  defaultValue={linked ? String(linked.id) : "none"}
+                  aria-label={`Person linked to ${u.email}`}
+                  className="flex-1"
+                  options={[
+                    { value: "none", label: "Not linked to anyone" },
+                    ...people.map((p) => ({
+                      value: String(p.id),
+                      label: p.name,
+                      hint: p.userId && p.userId !== u.id ? "linked to someone else" : p.active ? undefined : "switched off",
+                      disabled: Boolean(p.userId && p.userId !== u.id),
+                    })),
+                  ]}
+                />
                 <SubmitButton variant="outline" className="h-11 rounded-lg">
                   Link
                 </SubmitButton>

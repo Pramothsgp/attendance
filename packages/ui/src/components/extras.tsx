@@ -2,19 +2,6 @@ import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "../lib/utils";
 
-/** Native <select> styled like Input. Works in plain server-rendered forms. */
-export function NativeSelect({ className, ...props }: React.ComponentProps<"select">) {
-  return (
-    <select
-      className={cn(
-        "flex h-11 w-full rounded-lg border border-input bg-card px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
 /** Sets the theme class before first paint, so dark mode never flashes light. */
 export function ThemeScript() {
   const js = `try{var t=localStorage.getItem("theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("dark")}catch(e){}`;

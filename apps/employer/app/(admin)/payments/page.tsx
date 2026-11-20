@@ -1,6 +1,6 @@
 import { isMonth, money, today, shortDate } from "@repo/data/pay";
 import { paymentsIn, summaries } from "@repo/data/payroll";
-import { Input, Label, MonthNav, NativeSelect, Panel } from "@repo/ui";
+import { Input, Label, MonthNav, Panel, Picker } from "@repo/ui";
 import { addPayment, deletePayment } from "@/app/actions";
 import { ConfirmButton, SubmitButton } from "@/components/client";
 
@@ -25,16 +25,18 @@ export default async function Payments({ searchParams }: { searchParams: Promise
         <form action={addPayment} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="employeeId">Who</Label>
-            <NativeSelect id="employeeId" name="employeeId" required defaultValue={preselect}>
-              <option value="" disabled>
-                Choose a person
-              </option>
-              {people.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}: {p.balance >= 0 ? `${money(p.balance)} to pay` : `${money(-p.balance)} paid ahead`}
-                </option>
-              ))}
-            </NativeSelect>
+            <Picker
+              id="employeeId"
+              name="employeeId"
+              required
+              defaultValue={preselect}
+              placeholder="Choose a person"
+              options={people.map((p) => ({
+                value: String(p.id),
+                label: p.name,
+                hint: p.balance >= 0 ? `${money(p.balance)} to pay` : `${money(-p.balance)} paid ahead`,
+              }))}
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="amount">Amount (₹)</Label>
@@ -42,11 +44,16 @@ export default async function Payments({ searchParams }: { searchParams: Promise
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="type">Type</Label>
-            <NativeSelect id="type" name="type" defaultValue="salary">
-              <option value="salary">Salary</option>
-              <option value="advance">Advance or loan</option>
-              <option value="bonus">Bonus</option>
-            </NativeSelect>
+            <Picker
+              id="type"
+              name="type"
+              defaultValue="salary"
+              options={[
+                { value: "salary", label: "Salary" },
+                { value: "advance", label: "Advance or loan" },
+                { value: "bonus", label: "Bonus" },
+              ]}
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="day">Date</Label>

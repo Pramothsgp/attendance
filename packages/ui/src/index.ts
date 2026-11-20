@@ -21,6 +21,7 @@ export * from "./components/textarea";
 export * from "./components/extras";
 export * from "./components/theme";
 export * from "./components/calendar";
+export * from "./components/picker";
 
 // Navigation & interaction
 export * from "./components/dialog";
