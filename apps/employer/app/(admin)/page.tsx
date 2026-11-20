@@ -1,91 +1,105 @@
 import { isMonth, money, today } from "@repo/data/pay";
 import { attendanceOn, summaries } from "@repo/data/payroll";
-import { MonthPicker, Stat, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui";
+import { Button, MonthNav, Panel, PayStrip } from "@repo/ui";
+import { ChevronRight } from "lucide-react";
+import Link from "next/link";
 
-export default async function Summary({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
+export default async function Today({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
   const sp = await searchParams;
-  const month = isMonth(sp.month) ? sp.month : today().slice(0, 7);
-  const [rows, marks] = await Promise.all([summaries(month), attendanceOn(today())]);
+  const day = today();
+  const month = isMonth(sp.month) ? sp.month : day.slice(0, 7);
+  const [rows, marks] = await Promise.all([summaries(month), attendanceOn(day)]);
 
   const sum = (pick: (r: (typeof rows)[number]) => number) => rows.reduce((t, r) => t + pick(r), 0);
-  const due = sum((r) => Math.max(r.balance, 0));
-  const owed = sum((r) => Math.max(-r.balance, 0));
-  const todayCounts = { full: 0, half: 0, leave: 0 };
+  const counts = { full: 0, half: 0, leave: 0 };
   for (const r of rows) {
     const s = marks.get(r.id);
-    if (s) todayCounts[s]++;
+    if (s) counts[s]++;
   }
-  const unmarked = rows.length - todayCounts.full - todayCounts.half - todayCounts.leave;
+  const marked = counts.full + counts.half + counts.leave;
+  const pct = (n: number) => (rows.length ? `${(n / rows.length) * 100}%` : "0%");
+  const dateLabel = new Date(`${day}T00:00:00Z`).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
 
   return (
     <>
+      <Panel className="space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">{dateLabel}</p>
+            <h1 className="mt-1 text-3xl font-bold">
+              {rows.length === 0 ? "No one on the team yet" : marked === rows.length ? "Everyone is marked" : `${marked} of ${rows.length} marked`}
+            </h1>
+          </div>
+          {rows.length > 0 && (
+            <Button asChild size="lg" className="shrink-0 rounded-full">
+              <Link href="/attendance">{marked === rows.length ? "Review" : "Mark now"}</Link>
+            </Button>
+          )}
+        </div>
+        {rows.length > 0 ? (
+          <>
+            <div className="flex h-3 overflow-hidden rounded-full bg-muted" role="img" aria-label={`${counts.full} full, ${counts.half} half, ${counts.leave} leave, ${rows.length - marked} not marked`}>
+              <div className="bg-present" style={{ width: pct(counts.full) }} />
+              <div className="bg-half" style={{ width: pct(counts.half) }} />
+              <div className="bg-leave" style={{ width: pct(counts.leave) }} />
+            </div>
+            <ul className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
+              <li><span className="font-semibold text-present">{counts.full}</span> full day</li>
+              <li><span className="font-semibold text-half">{counts.half}</span> half day</li>
+              <li><span className="font-semibold text-leave">{counts.leave}</span> on leave</li>
+              <li className="text-muted-foreground">{rows.length - marked} not marked</li>
+            </ul>
+          </>
+        ) : (
+          <Button asChild>
+            <Link href="/employees">Add your first employee</Link>
+          </Button>
+        )}
+      </Panel>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Summary</h1>
-        <MonthPicker month={month} />
+        <h2 className="text-xl font-semibold">Money</h2>
+        <MonthNav month={month} path="/" />
       </div>
+      <PayStrip
+        opening={sum((r) => r.opening)}
+        earned={sum((r) => r.earnedMonth)}
+        paid={sum((r) => r.salaryMonth + r.advanceMonth)}
+        bonus={sum((r) => r.bonusMonth)}
+      />
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat label="Active employees" value={rows.length} />
-        <Stat label="Earned this month" value={money(sum((r) => r.earnedMonth))} />
-        <Stat label="Salary paid this month" value={money(sum((r) => r.salaryMonth))} />
-        <Stat label="Advances this month" value={money(sum((r) => r.advanceMonth))} />
-        <Stat label="Bonus this month" value={money(sum((r) => r.bonusMonth))} />
-        <Stat label="Still to pay (all time)" value={money(due)} tone={due > 0 ? "bad" : undefined} />
-        <Stat label="Owed by workers" value={money(owed)} hint="Paid more than earned" />
-        <Stat
-          label="Today"
-          value={`${todayCounts.full} / ${todayCounts.half} / ${todayCounts.leave}`}
-          hint={`full / half / leave, ${unmarked} not marked`}
-        />
-      </div>
-
-      <div className="rounded-lg border bg-background">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Pay</TableHead>
-              <TableHead className="text-right">Full</TableHead>
-              <TableHead className="text-right">Half</TableHead>
-              <TableHead className="text-right">Leave</TableHead>
-              <TableHead className="text-right">Earned</TableHead>
-              <TableHead className="text-right">Salary + advance</TableHead>
-              <TableHead className="text-right">Bonus</TableHead>
-              <TableHead className="text-right">Balance</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell className="font-medium">{r.name}</TableCell>
-                <TableCell className="text-muted-foreground">
-                  {money(r.rate)} / {r.payType === "daily" ? "day" : "month"}
-                </TableCell>
-                <TableCell className="text-right tabular-nums">{r.full}</TableCell>
-                <TableCell className="text-right tabular-nums">{r.half}</TableCell>
-                <TableCell className="text-right tabular-nums">{r.leave}</TableCell>
-                <TableCell className="text-right tabular-nums">{money(r.earnedMonth)}</TableCell>
-                <TableCell className="text-right tabular-nums">{money(r.salaryMonth + r.advanceMonth)}</TableCell>
-                <TableCell className="text-right tabular-nums">{money(r.bonusMonth)}</TableCell>
-                <TableCell className={`text-right font-medium tabular-nums ${r.balance < 0 ? "text-red-600" : ""}`}>
-                  {money(r.balance)}
-                </TableCell>
-              </TableRow>
-            ))}
-            {rows.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center text-muted-foreground">
-                  No active employees. Add some on the Employees page.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <p className="text-sm text-muted-foreground">
-        Columns are for the chosen month. Balance is all time: everything earned minus salary and advances paid. A negative
-        balance means the worker has been paid ahead. Bonus does not reduce the balance.
-      </p>
+      {rows.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="text-xl font-semibold">People</h2>
+          <ul className="divide-y overflow-hidden rounded-2xl border bg-card">
+            {rows.map((r) => {
+              const due = r.opening + r.earnedMonth - r.salaryMonth - r.advanceMonth;
+              const status = marks.get(r.id);
+              return (
+                <li key={r.id}>
+                  <Link href={`/calendar?employee=${r.id}&month=${month}`} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/60">
+                    <span
+                      className={`size-2.5 shrink-0 rounded-full ${status === "full" ? "bg-present" : status === "half" ? "bg-half" : status === "leave" ? "bg-leave" : "bg-border"}`}
+                      title={status ? `Today: ${status}` : "Today: not marked"}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium">{r.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {r.full} full, {r.half} half, {r.leave} leave
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`font-display font-semibold tabular-nums ${due < 0 ? "text-leave" : ""}`}>{money(Math.abs(due))}</div>
+                      <div className="text-xs text-muted-foreground">{due < 0 ? "paid ahead" : "to pay"}</div>
+                    </div>
+                    <ChevronRight className="size-4 text-muted-foreground" />
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
     </>
   );
 }

@@ -6,51 +6,65 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
+  /* Work-register palette: cool paper, indigo ink, and one colour per attendance state. */
+  --background: 220 20% 97%;
+  --foreground: 223 42% 18%;
   --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
+  --card-foreground: 223 42% 18%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 221.2 83.2% 53.3%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
-  --radius: 0.5rem;
+  --popover-foreground: 223 42% 18%;
+  --primary: 230 53% 36%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 225 32% 93%;
+  --secondary-foreground: 230 45% 28%;
+  --muted: 222 24% 94%;
+  --muted-foreground: 223 14% 42%;
+  --accent: 225 32% 93%;
+  --accent-foreground: 230 45% 28%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 222 22% 88%;
+  --input: 222 22% 84%;
+  --ring: 230 53% 46%;
+  --present: 142 72% 34%;
+  --half: 32 95% 42%;
+  --leave: 0 72% 51%;
+  --radius: 0.875rem;
+  color-scheme: light;
 }
 
 .dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 217.2 91.2% 59.8%;
-  --primary-foreground: 222.2 47.4% 11.2%;
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 224.3 76.3% 94.1%;
+  --background: 228 35% 8%;
+  --foreground: 222 30% 92%;
+  --card: 226 30% 13%;
+  --card-foreground: 222 30% 92%;
+  --popover: 226 30% 13%;
+  --popover-foreground: 222 30% 92%;
+  --primary: 229 85% 74%;
+  --primary-foreground: 228 40% 12%;
+  --secondary: 226 26% 19%;
+  --secondary-foreground: 222 30% 92%;
+  --muted: 226 26% 17%;
+  --muted-foreground: 222 14% 66%;
+  --accent: 226 26% 19%;
+  --accent-foreground: 222 30% 92%;
+  --destructive: 0 75% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 226 22% 21%;
+  --input: 226 22% 26%;
+  --ring: 229 85% 74%;
+  --present: 142 60% 48%;
+  --half: 38 92% 56%;
+  --leave: 0 80% 65%;
+  color-scheme: dark;
 }
 
 @theme inline {
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-head), var(--font-body), ui-sans-serif, sans-serif;
+  --color-present: hsl(var(--present));
+  --color-half: hsl(var(--half));
+  --color-leave: hsl(var(--leave));
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
   --color-card: hsl(var(--card));
@@ -80,6 +94,16 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+    -webkit-tap-highlight-color: transparent;
+  }
+  h1, h2, h3 {
+    @apply font-display tracking-tight;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
