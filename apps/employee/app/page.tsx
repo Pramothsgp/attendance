@@ -2,7 +2,7 @@ import { SignOutButton } from "@repo/auth/components";
 import { requireSession } from "@repo/auth/next";
 import { isMonth, money, today, shortDate } from "@repo/data/pay";
 import { attendanceFor, employeeForUser, paymentsIn, summaries } from "@repo/data/payroll";
-import { MonthCalendar, MonthNav, Panel, PayStrip, StatusKey } from "@repo/ui";
+import { InstallHint, MonthCalendar, MonthNav, Panel, PayStrip, StatusKey } from "@repo/ui";
 import { auth } from "@/lib/auth";
 
 const TYPE_LABEL = { salary: "Salary", bonus: "Bonus", advance: "Advance" } as const;
@@ -33,6 +33,7 @@ export default async function Me({ searchParams }: { searchParams: Promise<{ mon
 
   return (
     <>
+      <InstallHint appName="My pay" />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Hi {me.name.split(" ")[0]}</h1>

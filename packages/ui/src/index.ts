@@ -22,6 +22,7 @@ export * from "./components/extras";
 export * from "./components/theme";
 export * from "./components/calendar";
 export * from "./components/picker";
+export * from "./components/install";
 
 // Navigation & interaction
 export * from "./components/dialog";

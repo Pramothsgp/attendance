@@ -1,6 +1,6 @@
 import { isMonth, money, today } from "@repo/data/pay";
 import { attendanceOn, summaries } from "@repo/data/payroll";
-import { Button, MonthNav, Panel, PayStrip } from "@repo/ui";
+import { Button, InstallHint, MonthNav, Panel, PayStrip } from "@repo/ui";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
@@ -22,6 +22,7 @@ export default async function Today({ searchParams }: { searchParams: Promise<{ 
 
   return (
     <>
+      <InstallHint appName="Attendance" />
       <Panel className="space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div>
