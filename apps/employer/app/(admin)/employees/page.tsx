@@ -1,7 +1,8 @@
 import { money } from "@repo/data/pay";
 import { listEmployees } from "@repo/data/payroll";
-import { cn, Input, Label, NativeSelect } from "@repo/ui";
-import { ChevronDown } from "lucide-react";
+import { cn, Input, Label, Picker } from "@repo/ui";
+import { ChevronDown, KeyRound } from "lucide-react";
+import Link from "next/link";
 import { createEmployee, deleteEmployee, setActive, updateEmployee } from "@/app/actions";
 import { ConfirmButton, SubmitButton } from "@/components/client";
 
@@ -20,10 +21,15 @@ function EmployeeFields({ d = {}, prefix }: { d?: Defaults; prefix: string }) {
       </div>
       <div className="space-y-1.5">
         <Label htmlFor={`${prefix}-pay`}>Paid by</Label>
-        <NativeSelect id={`${prefix}-pay`} name="payType" defaultValue={d.payType ?? "daily"}>
-          <option value="daily">Daily wage</option>
-          <option value="monthly">Monthly salary (30-day month)</option>
-        </NativeSelect>
+        <Picker
+          id={`${prefix}-pay`}
+          name="payType"
+          defaultValue={d.payType ?? "daily"}
+          options={[
+            { value: "daily", label: "Daily wage" },
+            { value: "monthly", label: "Monthly salary", hint: "30-day month" },
+          ]}
+        />
       </div>
       <div className="space-y-1.5">
         <Label htmlFor={`${prefix}-rate`}>Amount per day or month (₹)</Label>
@@ -45,6 +51,17 @@ export default async function Employees() {
           {active} working{people.length > active ? `, ${people.length - active} disabled` : ""}
         </span>
       </div>
+
+      <Link
+        href="/users"
+        className="flex items-center gap-3 rounded-2xl border bg-card p-4 hover:bg-muted/60"
+      >
+        <KeyRound className="size-5 text-primary" />
+        <span className="flex-1">
+          <span className="block font-medium">Logins and access</span>
+          <span className="text-sm text-muted-foreground">Link a worker&apos;s login to their record, or make someone an admin</span>
+        </span>
+      </Link>
 
       <details className="group rounded-2xl border bg-card" open={people.length === 0}>
         <summary className="flex cursor-pointer list-none items-center justify-between p-4 font-medium">
@@ -72,6 +89,9 @@ export default async function Employees() {
                   {money(Number(p.rate))} per {p.payType === "daily" ? "day" : "month"}
                   {p.phone ? `, ${p.phone}` : ""}
                 </div>
+                <Link href="/users" className={cn("text-xs", p.email ? "text-muted-foreground" : "text-primary")}>
+                  {p.email ? `Login: ${p.email}` : "No login linked"}
+                </Link>
               </div>
               <form action={setActive}>
                 <input type="hidden" name="id" value={p.id} />
