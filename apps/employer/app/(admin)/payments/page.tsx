@@ -1,6 +1,7 @@
 import { isMonth, money, today, shortDate } from "@repo/data/pay";
 import { paymentsIn, summaries } from "@repo/data/payroll";
-import { MonthNav, Panel } from "@repo/ui";
+import { cn, MonthNav, Panel } from "@repo/ui";
+import Link from "next/link";
 import { addPayment, deletePayment } from "@/app/actions";
 import { ConfirmButton } from "@/components/client";
 import { PaymentForm } from "@/components/payment-form";
@@ -34,6 +35,33 @@ export default async function Payments({ searchParams }: { searchParams: Promise
           ahead, and later work pays it off. Bonus is extra and doesn&apos;t change what they&apos;re owed.
         </p>
       </Panel>
+
+
+      {people.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="text-xl font-semibold">Who to pay</h2>
+          <ul className="divide-y rounded-2xl border bg-card">
+            {people
+              .toSorted((x, y) => y.balance - x.balance)
+              .map((p) => (
+                <li key={p.id} className={cn("flex items-center gap-3 px-4 py-3", String(p.id) === preselect && "bg-secondary/60")}>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{p.name}</div>
+                    <div className={cn("text-sm", p.balance > 0 ? "text-muted-foreground" : "text-present")}>
+                      {p.balance > 0 ? `${money(p.balance)} to pay` : p.balance < 0 ? `${money(-p.balance)} paid ahead` : "All paid"}
+                    </div>
+                  </div>
+                  <Link
+                    href={`/payments?employee=${p.id}&month=${month}#pay`}
+                    className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                  >
+                    Pay
+                  </Link>
+                </li>
+              ))}
+          </ul>
+        </section>
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">Paid in</h2>
