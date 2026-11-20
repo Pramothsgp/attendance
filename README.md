@@ -1,4 +1,28 @@
-# App template
+# Attendance & Pay
+
+Tracks workers' attendance and pay. Two services share one Postgres (Neon) database:
+
+- `apps/employer` (admin): employees (add, edit, enable/disable, delete), attendance for many people at once
+  (full day / half day / leave / clear), payments (salary, bonus, advance), monthly summary, and users & access
+  (link a sign-in account to an employee, make someone an admin, ban).
+- `apps/employee` (web): a signed-in worker sees only the employee their account is linked to: days, earnings,
+  money received and balance per month.
+
+Pay rules (`packages/data/pay.ts`, tested in `pay.test.ts`):
+
+- Daily wage: a full day earns the wage, a half day half of it, leave nothing. Monthly salary works the same with a
+  day rate of salary / 30.
+- What a day earns is stored when it is marked, so changing someone's rate doesn't rewrite past pay.
+- Balance (all time) = earned - salary - advances. Payments are never capped: paying ahead leaves a negative balance
+  that later work pays off. Bonus is extra and doesn't touch the balance.
+- Disabled employees drop out of attendance, payments, the summary and the employee app. Their history stays.
+- "Today" uses `APP_TIMEZONE` (default `Asia/Kolkata`).
+
+Access: people sign up in the employee app. An admin links the account to an employee on Users & access, or makes it an
+admin, after which it can sign in to the employer app with the same email and password. The first admin comes from
+`ADMIN_EMAILS` (Google sign-in) or the `psql` command below.
+
+## Template
 
 Bun + Turborepo monorepo. Each folder in `apps/` is one Cloud Run service.
 
