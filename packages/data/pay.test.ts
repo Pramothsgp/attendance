@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { dayEarning, isDay, isMonth, monthRange } from "./pay.ts";
+import { dayEarning, isDay, isMonth, monthRange, shortDate } from "./pay.ts";
 
 test("daily wage: full, half, leave", () => {
   expect(dayEarning("daily", 600, "full")).toBe(600);
@@ -27,4 +27,8 @@ test("input checks", () => {
   expect(isDay("2026-02-31")).toBe(false);
   expect(isMonth("2026-11")).toBe(true);
   expect(isMonth("2026-13")).toBe(false);
+});
+
+test("short date", () => {
+  expect(shortDate("2026-11-05")).toBe("5 Nov");
 });

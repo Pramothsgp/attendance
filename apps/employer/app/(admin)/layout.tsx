@@ -1,34 +1,39 @@
 import { SignOutButton } from "@repo/auth/components";
 import { requireAdmin } from "@repo/auth/next";
+import { ThemeToggle } from "@repo/ui";
+import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import { BottomNav, TopNav } from "@/components/nav";
 import { auth } from "@/lib/auth";
-
-const NAV = [
-  ["/", "Summary"],
-  ["/attendance", "Attendance"],
-  ["/payments", "Payments"],
-  ["/employees", "Employees"],
-  ["/users", "Users & access"],
-] as const;
 
 // Page guard only. Server actions check again on their own (see app/actions.ts).
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const session = await requireAdmin(auth());
+  await requireAdmin(auth());
   return (
     <>
-      <header className="border-b bg-background">
-        <nav className="mx-auto flex max-w-6xl flex-wrap items-center gap-1 px-4 py-3">
-          <span className="mr-4 font-semibold">Attendance &amp; Pay</span>
-          {NAV.map(([href, label]) => (
-            <Link key={href} href={href} className="rounded-md px-3 py-1.5 text-sm hover:bg-muted">
-              {label}
+      <header className="sticky top-0 z-30 border-b bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
+          <Link href="/" className="mr-2 font-display text-lg font-bold">
+            Attendance &amp; Pay
+          </Link>
+          <TopNav />
+          <div className="ml-auto flex items-center gap-2">
+            <Link
+              href="/users"
+              aria-label="Users and access"
+              className="grid size-10 place-items-center rounded-full border bg-card hover:bg-muted"
+            >
+              <ShieldCheck className="size-5" />
             </Link>
-          ))}
-          <span className="ml-auto mr-2 text-sm text-muted-foreground">{session.user.email}</span>
-          <SignOutButton />
-        </nav>
+            <ThemeToggle />
+            <div className="hidden sm:block">
+              <SignOutButton />
+            </div>
+          </div>
+        </div>
       </header>
-      <main className="mx-auto max-w-6xl space-y-6 px-4 py-8">{children}</main>
+      <main className="mx-auto max-w-6xl space-y-5 px-4 pb-28 pt-5 md:pb-12">{children}</main>
+      <BottomNav />
     </>
   );
 }

@@ -43,3 +43,8 @@ export function isMonth(value: unknown): value is string {
 export function money(value: number): string {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(value);
 }
+
+/** "2026-11-15" -> "15 Nov" */
+export function shortDate(day: string): string {
+  return new Date(`${day}T00:00:00Z`).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" });
+}

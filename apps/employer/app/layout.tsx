@@ -1,14 +1,28 @@
-import type { Metadata } from "next";
+import { ThemeScript } from "@repo/ui";
+import type { Metadata, Viewport } from "next";
+import { body, head } from "@/lib/fonts";
 import "./globals.css";
 
-export const metadata: Metadata = { title: "Attendance & Pay" };
+export const metadata: Metadata = { title: "Attendance & Pay", description: "Mark attendance and pay your team." };
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f7f9" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d111c" },
+  ],
+};
 // Every page reads live data or the session.
 export const dynamic = "force-dynamic";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-muted/30 antialiased">{children}</body>
+    <html lang="en" className={`${head.variable} ${body.variable}`} suppressHydrationWarning>
+      <head>
+        <ThemeScript />
+      </head>
+      <body className="min-h-dvh antialiased">{children}</body>
     </html>
   );
 }

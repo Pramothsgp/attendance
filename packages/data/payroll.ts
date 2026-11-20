@@ -24,12 +24,14 @@ export type EmployeeSummary = {
   paidTotal: number; // salary + advance, all time
   bonusTotal: number;
   balance: number; // earnedTotal - paidTotal; negative means the worker owes money
+  opening: number; // still to pay at the start of the month (earned - salary - advances before it)
 };
 
 /** Month figures plus the all-time balance, for active employees (or one employee). */
 export async function summaries(month: string, employeeId?: number): Promise<EmployeeSummary[]> {
   const { from, to } = monthRange(month);
   const inMonth = sql`day between ${from} and ${to}`;
+  const before = sql`day < ${from}`;
   const filter = employeeId === undefined ? sql`e.active` : sql`e.id = ${employeeId} and e.active`;
   const { rows } = await db.execute(sql`
     select e.id, e.name, e.phone, e.pay_type, e.rate,
@@ -37,7 +39,8 @@ export async function summaries(month: string, employeeId?: number): Promise<Emp
       coalesce(a.earned_month, 0) as earned_month, coalesce(a.earned_total, 0) as earned_total,
       coalesce(p.salary_month, 0) as salary_month, coalesce(p.advance_month, 0) as advance_month,
       coalesce(p.bonus_month, 0) as bonus_month, coalesce(p.paid_total, 0) as paid_total,
-      coalesce(p.bonus_total, 0) as bonus_total
+      coalesce(p.bonus_total, 0) as bonus_total,
+      coalesce(a.earned_before, 0) - coalesce(p.paid_before, 0) as opening
     from employee e
     left join (
       select employee_id,
@@ -45,7 +48,8 @@ export async function summaries(month: string, employeeId?: number): Promise<Emp
         count(*) filter (where status = 'half' and ${inMonth}) as half_days,
         count(*) filter (where status = 'leave' and ${inMonth}) as leave_days,
         sum(earned) filter (where ${inMonth}) as earned_month,
-        sum(earned) as earned_total
+        sum(earned) as earned_total,
+        sum(earned) filter (where ${before}) as earned_before
       from attendance group by employee_id
     ) a on a.employee_id = e.id
     left join (
@@ -54,7 +58,8 @@ export async function summaries(month: string, employeeId?: number): Promise<Emp
         sum(amount) filter (where type = 'advance' and ${inMonth}) as advance_month,
         sum(amount) filter (where type = 'bonus' and ${inMonth}) as bonus_month,
         sum(amount) filter (where type <> 'bonus') as paid_total,
-        sum(amount) filter (where type = 'bonus') as bonus_total
+        sum(amount) filter (where type = 'bonus') as bonus_total,
+        sum(amount) filter (where type <> 'bonus' and ${before}) as paid_before
       from payment group by employee_id
     ) p on p.employee_id = e.id
     where ${filter}
@@ -81,6 +86,7 @@ export async function summaries(month: string, employeeId?: number): Promise<Emp
       paidTotal,
       bonusTotal: Number(r.bonus_total),
       balance: Math.round((earnedTotal - paidTotal) * 100) / 100,
+      opening: Math.round(Number(r.opening) * 100) / 100,
     };
   });
 }

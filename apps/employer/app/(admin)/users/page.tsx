@@ -1,10 +1,12 @@
+import { SignOutButton } from "@repo/auth/components";
 import { requireAdmin } from "@repo/auth/next";
 import { listEmployees } from "@repo/data/payroll";
-import { Badge, Button, NativeSelect, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui";
+import { Button, cn, NativeSelect, Panel } from "@repo/ui";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { linkUser, setRole } from "@/app/actions";
 import { BanButton } from "@/components/ban-button";
+import { SubmitButton } from "@/components/client";
 import { auth } from "@/lib/auth";
 
 const PAGE_SIZE = 50;
@@ -24,97 +26,87 @@ export default async function Users({ searchParams }: { searchParams: Promise<{ 
 
   return (
     <>
-      <div>
-        <h1 className="text-2xl font-bold">Users &amp; access ({total})</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          People sign up in the employee app. Link their account to an employee so they can see their attendance and pay, or
-          make them an admin to give them this employer app (they sign in here with the same email and password).
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Users and access</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Signed in as {session.user.email}</p>
+        </div>
+        <SignOutButton />
       </div>
+      <Panel className="text-sm text-muted-foreground">
+        People sign up in the employee app. Link their account to a person here so they can see their own attendance and
+        pay. Make someone an admin to give them this app; they sign in with the same email and password.
+      </Panel>
 
-      <div className="rounded-lg border bg-background">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead>Access</TableHead>
-              <TableHead>Employee</TableHead>
-              <TableHead />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users.map((u) => {
-              const linked = byUser.get(u.id);
-              const isAdmin = u.role === "admin";
-              const self = u.id === session.user.id;
-              return (
-                <TableRow key={u.id}>
-                  <TableCell>
-                    <div className="font-medium">{u.name}</div>
-                    <div className="text-sm text-muted-foreground">{u.email}</div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={isAdmin ? "default" : "secondary"}>{isAdmin ? "Admin" : "Employee"}</Badge>
-                    {u.banned && (
-                      <Badge variant="destructive" className="ml-2">
-                        banned
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <form action={linkUser} className="flex gap-2">
-                      <input type="hidden" name="userId" value={u.id} />
-                      <NativeSelect name="employeeId" defaultValue={linked?.id ?? ""} className="h-9 min-w-40">
-                        <option value="">Not linked</option>
-                        {people.map((p) => (
-                          <option key={p.id} value={p.id} disabled={Boolean(p.userId && p.userId !== u.id)}>
-                            {p.name}
-                            {p.userId && p.userId !== u.id ? " (linked)" : ""}
-                            {p.active ? "" : " (disabled)"}
-                          </option>
-                        ))}
-                      </NativeSelect>
-                      <Button type="submit" variant="outline" size="sm">
-                        Save
-                      </Button>
-                    </form>
-                  </TableCell>
-                  <TableCell>
-                    {!self && (
-                      <div className="flex justify-end gap-2">
-                        <form action={setRole}>
-                          <input type="hidden" name="userId" value={u.id} />
-                          <input type="hidden" name="role" value={isAdmin ? "user" : "admin"} />
-                          <Button type="submit" variant="outline" size="sm">
-                            {isAdmin ? "Remove admin" : "Make admin"}
-                          </Button>
-                        </form>
-                        <BanButton userId={u.id} banned={Boolean(u.banned)} />
-                      </div>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+      <ul className="space-y-2">
+        {users.map((u) => {
+          const linked = byUser.get(u.id);
+          const isAdmin = u.role === "admin";
+          const self = u.id === session.user.id;
+          return (
+            <li key={u.id} className="space-y-3 rounded-2xl border bg-card p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="truncate font-medium">{u.name}</div>
+                  <div className="truncate text-sm text-muted-foreground">{u.email}</div>
+                </div>
+                <div className="flex shrink-0 gap-1.5">
+                  <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-medium", isAdmin ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground")}>
+                    {isAdmin ? "Admin" : "Employee"}
+                  </span>
+                  {u.banned && <span className="rounded-full bg-leave/15 px-2.5 py-0.5 text-xs font-medium text-leave">Banned</span>}
+                </div>
+              </div>
+              <form action={linkUser} className="flex gap-2">
+                <input type="hidden" name="userId" value={u.id} />
+                <NativeSelect name="employeeId" defaultValue={linked?.id ?? ""} aria-label={`Person linked to ${u.email}`} className="flex-1">
+                  <option value="">Not linked to anyone</option>
+                  {people.map((p) => (
+                    <option key={p.id} value={p.id} disabled={Boolean(p.userId && p.userId !== u.id)}>
+                      {p.name}
+                      {p.userId && p.userId !== u.id ? " (linked to someone else)" : ""}
+                      {p.active ? "" : " (switched off)"}
+                    </option>
+                  ))}
+                </NativeSelect>
+                <SubmitButton variant="outline" className="h-11 rounded-lg">
+                  Link
+                </SubmitButton>
+              </form>
+              {!self && (
+                <div className="flex gap-2">
+                  <form action={setRole} className="flex-1">
+                    <input type="hidden" name="userId" value={u.id} />
+                    <input type="hidden" name="role" value={isAdmin ? "user" : "admin"} />
+                    <SubmitButton variant="outline" size="sm" className="w-full rounded-lg">
+                      {isAdmin ? "Remove admin" : "Make admin"}
+                    </SubmitButton>
+                  </form>
+                  <BanButton userId={u.id} banned={Boolean(u.banned)} />
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
 
-      <div className="flex items-center justify-end gap-2">
-        <span className="text-sm text-muted-foreground">
-          Page {page} of {pages}
-        </span>
-        {page > 1 && (
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/users?page=${page - 1}`}>Previous</Link>
-          </Button>
-        )}
-        {page < pages && (
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/users?page=${page + 1}`}>Next</Link>
-          </Button>
-        )}
-      </div>
+      {pages > 1 && (
+        <div className="flex items-center justify-end gap-2">
+          <span className="text-sm text-muted-foreground">
+            Page {page} of {pages}
+          </span>
+          {page > 1 && (
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/users?page=${page - 1}`}>Previous</Link>
+            </Button>
+          )}
+          {page < pages && (
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/users?page=${page + 1}`}>Next</Link>
+            </Button>
+          )}
+        </div>
+      )}
     </>
   );
 }

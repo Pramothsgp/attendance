@@ -1,12 +1,11 @@
-import { isMonth, money, today } from "@repo/data/pay";
 import { SignOutButton } from "@repo/auth/components";
 import { requireSession } from "@repo/auth/next";
+import { isMonth, money, today, shortDate } from "@repo/data/pay";
 import { attendanceFor, employeeForUser, paymentsIn, summaries } from "@repo/data/payroll";
-import { Badge, MonthPicker, Stat, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui";
+import { MonthCalendar, MonthNav, Panel, PayStrip, StatusKey } from "@repo/ui";
 import { auth } from "@/lib/auth";
 
-const LABEL = { full: "Full day", half: "Half day", leave: "Leave" } as const;
-const TONE = { full: "default", half: "outline", leave: "destructive" } as const;
+const TYPE_LABEL = { salary: "Salary", bonus: "Bonus", advance: "Advance" } as const;
 
 export default async function Me({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
   const session = await requireSession(auth());
@@ -14,107 +13,73 @@ export default async function Me({ searchParams }: { searchParams: Promise<{ mon
   const linked = await employeeForUser(session.user.id);
   if (!linked) {
     return (
-      <div className="space-y-4 rounded-lg border bg-background p-6">
-        <h1 className="text-xl font-bold">Hi {session.user.name}</h1>
+      <Panel className="space-y-4">
+        <h1 className="text-2xl font-bold">Hi {session.user.name}</h1>
         <p className="text-muted-foreground">
-          Your account ({session.user.email}) isn&apos;t linked to an employee yet. Ask your employer to link it, then
-          reload this page.
+          Your account ({session.user.email}) isn&apos;t linked to your work record yet. Ask your employer to link it, then
+          open this page again.
         </p>
         <SignOutButton />
-      </div>
+      </Panel>
     );
   }
   const id = linked.id;
+  const now = today();
   const sp = await searchParams;
-  const month = isMonth(sp.month) ? sp.month : today().slice(0, 7);
+  const month = isMonth(sp.month) ? sp.month : now.slice(0, 7);
 
   const [[me], days, paid] = await Promise.all([summaries(month, id), attendanceFor(id, month), paymentsIn(month, id)]);
   if (!me) return null;
 
   return (
     <>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{me.name}</h1>
+          <h1 className="text-2xl font-bold">Hi {me.name.split(" ")[0]}</h1>
           <p className="text-sm text-muted-foreground">
             {money(me.rate)} per {me.payType === "daily" ? "day" : "month (30 days)"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <MonthPicker month={month} />
-          <SignOutButton />
-        </div>
+        <MonthNav month={month} path="/" />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <Stat label="Days this month" value={`${me.full} / ${me.half} / ${me.leave}`} hint="full / half / leave" />
-        <Stat label="Earned this month" value={money(me.earnedMonth)} />
-        <Stat label="Received this month" value={money(me.salaryMonth + me.advanceMonth)} hint="salary + advance" />
-        <Stat label="Bonus this month" value={money(me.bonusMonth)} />
-        <Stat
-          label={me.balance >= 0 ? "Still to receive" : "Paid ahead"}
-          value={money(Math.abs(me.balance))}
-          hint="All time"
-          tone={me.balance >= 0 ? "good" : "bad"}
-        />
+      <PayStrip opening={me.opening} earned={me.earnedMonth} paid={me.salaryMonth + me.advanceMonth} bonus={me.bonusMonth} worker />
+
+      <Panel className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <StatusKey />
+          <span className="text-sm text-muted-foreground">
+            {me.full} full, {me.half} half, {me.leave} leave
+          </span>
+        </div>
+        <MonthCalendar month={month} today={now} days={days.map((d) => ({ day: d.day, status: d.status, earned: Number(d.earned) }))} />
+      </Panel>
+
+      <section className="space-y-2">
+        <h2 className="text-xl font-semibold">Money received</h2>
+        {paid.length === 0 ? (
+          <p className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">Nothing received in this month yet.</p>
+        ) : (
+          <ul className="divide-y rounded-2xl border bg-card">
+            {paid.map((p) => (
+              <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                <div>
+                  <div className="font-medium">{TYPE_LABEL[p.type]}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {shortDate(p.day)}
+                    {p.note ? `, ${p.note}` : ""}
+                  </div>
+                </div>
+                <div className="font-display font-semibold tabular-nums">{money(Number(p.amount))}</div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <div className="pt-2">
+        <SignOutButton />
       </div>
-
-      <section className="space-y-2">
-        <h2 className="font-semibold">Attendance</h2>
-        <div className="rounded-lg border bg-background">
-          <Table>
-            <TableBody>
-              {days.map((d) => (
-                <TableRow key={d.day}>
-                  <TableCell className="tabular-nums">{d.day}</TableCell>
-                  <TableCell>
-                    <Badge variant={TONE[d.status]}>{LABEL[d.status]}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{money(Number(d.earned))}</TableCell>
-                </TableRow>
-              ))}
-              {days.length === 0 && (
-                <TableRow>
-                  <TableCell className="text-center text-muted-foreground">Nothing marked in {month}.</TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </section>
-
-      <section className="space-y-2">
-        <h2 className="font-semibold">Money received</h2>
-        <div className="rounded-lg border bg-background">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Note</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paid.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="tabular-nums">{p.day}</TableCell>
-                  <TableCell>{p.type}</TableCell>
-                  <TableCell className="text-muted-foreground">{p.note}</TableCell>
-                  <TableCell className="text-right tabular-nums">{money(Number(p.amount))}</TableCell>
-                </TableRow>
-              ))}
-              {paid.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground">
-                    No payments in {month}.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </section>
     </>
   );
 }
