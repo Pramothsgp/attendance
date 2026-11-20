@@ -4,7 +4,12 @@ import Link from "next/link";
 import { body, head } from "@/lib/fonts";
 import "./globals.css";
 
-export const metadata: Metadata = { title: "My attendance & pay", description: "Your days worked and your pay." };
+export const metadata: Metadata = {
+  title: "My attendance & pay",
+  description: "Your days worked and your pay.",
+  // Home-screen name and full-screen launch on iPhone.
+  appleWebApp: { capable: true, title: "My pay", statusBarStyle: "default" },
+};
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,

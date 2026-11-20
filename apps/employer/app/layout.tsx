@@ -3,7 +3,12 @@ import type { Metadata, Viewport } from "next";
 import { body, head } from "@/lib/fonts";
 import "./globals.css";
 
-export const metadata: Metadata = { title: "Attendance & Pay", description: "Mark attendance and pay your team." };
+export const metadata: Metadata = {
+  title: "Attendance & Pay",
+  description: "Mark attendance and pay your team.",
+  // Home-screen name and full-screen launch on iPhone.
+  appleWebApp: { capable: true, title: "Attendance", statusBarStyle: "default" },
+};
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
