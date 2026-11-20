@@ -1,5 +1,16 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules", "drizzle"]
+  "include": [
+    "**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "drizzle"
+  ],
+  "compilerOptions": {
+    "types": [
+      "node",
+      "bun"
+    ]
+  }
 }
