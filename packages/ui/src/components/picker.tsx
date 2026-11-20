@@ -13,6 +13,8 @@ export function Picker({
   name,
   options,
   defaultValue,
+  value,
+  onValueChange,
   placeholder = "Choose",
   required,
   id,
@@ -22,6 +24,9 @@ export function Picker({
   name: string;
   options: PickerOption[];
   defaultValue?: string;
+  /** Controlled use: pass value and onValueChange together. */
+  value?: string;
+  onValueChange?: (value: string) => void;
   placeholder?: string;
   required?: boolean;
   id?: string;
@@ -31,7 +36,14 @@ export function Picker({
   return (
     // Keyed by the saved value: after a form action React resets fields to their first
     // default, so remount when the server sends a new one.
-    <Select key={defaultValue} name={name} defaultValue={defaultValue || undefined} required={required}>
+    <Select
+      key={defaultValue}
+      name={name}
+      defaultValue={value === undefined ? defaultValue || undefined : undefined}
+      value={value}
+      onValueChange={onValueChange}
+      required={required}
+    >
       <SelectTrigger
         id={id}
         aria-label={ariaLabel}
