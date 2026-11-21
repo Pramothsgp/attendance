@@ -1,7 +1,7 @@
 // Read queries shared by the employer and employee apps.
 import { and, asc, desc, eq, getTableColumns, gte, lte, sql } from "drizzle-orm";
 import { db } from "./client.ts";
-import { monthRange, type PayType } from "./pay.ts";
+import { monthRange, paidState, type PayType, type Status } from "./pay.ts";
 import { attendance, employee, payment, user } from "./schema/index.ts";
 
 const MAX_EMPLOYEES = 1000;
@@ -143,14 +143,30 @@ export async function attendanceBetween(employeeId: number, from: string, to: st
   return new Map(rows.map((r) => [r.day, r.status]));
 }
 
-export function attendanceFor(employeeId: number, month: string) {
+/**
+ * One person's days in a month, each marked paid / part / not, given `credit`
+ * (EmployeeSummary.paidTotal - openingBalance). Oldest earnings are paid first.
+ */
+export async function attendanceFor(employeeId: number, month: string, credit: number) {
   const { from, to } = monthRange(month);
-  return db
-    .select()
-    .from(attendance)
-    .where(and(eq(attendance.employeeId, employeeId), gte(attendance.day, from), lte(attendance.day, to)))
-    .orderBy(asc(attendance.day))
-    .limit(31);
+  const { rows } = await db.execute(sql`
+    select day::text as day, status, earned, before from (
+      select day, status, earned, coalesce(sum(earned) over (order by day rows between unbounded preceding and 1 preceding), 0) as before
+      from attendance where employee_id = ${employeeId} and day <= ${to}
+    ) t
+    where day >= ${from}
+    order by day
+    limit 31
+  `);
+  return rows.map((r) => {
+    const earned = Number(r.earned);
+    return {
+      day: String(r.day),
+      status: r.status as Status,
+      earned,
+      paid: paidState(Number(r.before), earned, credit),
+    };
+  });
 }
 
 /** Payments in a month, newest first, optionally for one employee. */

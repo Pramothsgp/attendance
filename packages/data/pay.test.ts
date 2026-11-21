@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { dayEarning, isDay, isMonth, money, monthRange, shortDate } from "./pay.ts";
+import { dayEarning, isDay, isMonth, money, monthRange, paidState, shortDate } from "./pay.ts";
 
 test("daily wage: full, half, leave", () => {
   expect(dayEarning("daily", 600, "full")).toBe(600);
@@ -31,6 +31,16 @@ test("input checks", () => {
 
 test("short date", () => {
   expect(shortDate("2026-11-05")).toBe("5 Nov");
+});
+
+test("payments clear the oldest days first", () => {
+  // Three ₹500 days, ₹1,200 paid: first two paid, third partly, nothing past it.
+  expect(paidState(0, 500, 1200)).toBe("paid");
+  expect(paidState(500, 500, 1200)).toBe("paid");
+  expect(paidState(1000, 500, 1200)).toBe("part");
+  expect(paidState(1500, 500, 1200)).toBeUndefined();
+  expect(paidState(0, 0, 1200)).toBeUndefined(); // leave earns nothing, so nothing to pay
+  expect(paidState(0, 500, 0)).toBeUndefined();
 });
 
 test("money drops .00 but keeps paise", () => {

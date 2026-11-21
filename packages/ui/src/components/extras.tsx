@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "../lib/utils";
 
 /** Sets the theme class before first paint, so dark mode never flashes light. */
@@ -132,6 +132,7 @@ export function StatusKey() {
       <li className="flex items-center gap-1.5"><span className="size-3 rounded bg-present" />Full day</li>
       <li className="flex items-center gap-1.5"><span className="size-3 rounded border-2 border-half bg-[linear-gradient(135deg,hsl(var(--half))_50%,transparent_50%)]" />Half day</li>
       <li className="flex items-center gap-1.5"><span className="size-3 rounded border-2 border-leave" />Leave</li>
+      <li className="flex items-center gap-1.5"><Check className="size-3.5 text-present" strokeWidth={3} />Day paid for</li>
     </ul>
   );
 }

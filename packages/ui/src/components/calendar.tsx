@@ -2,10 +2,12 @@
 
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { Check } from "lucide-react";
 import { cn } from "../lib/utils";
 
 type Status = "full" | "half" | "leave";
-export type CalendarDay = { day: string; status: Status; earned: number };
+/** paid: covered by payments so far ("part" when the money ran out partway through the day). */
+export type CalendarDay = { day: string; status: Status; earned: number; paid?: "paid" | "part" };
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const LABEL: Record<Status, string> = { full: "Full day", half: "Half day", leave: "Leave" };
@@ -58,7 +60,14 @@ export function MonthCalendar({
     const future = day > today;
     const body = (
       <>
-        <span className="text-sm font-semibold leading-none">{i + 1}</span>
+        <span className="flex items-start justify-between">
+          <span className="text-sm font-semibold leading-none">{i + 1}</span>
+          {entry?.paid && (
+            <span className={cn("grid size-4 place-items-center rounded-full bg-background text-present", entry.paid === "part" && "opacity-60")}>
+              <Check className="size-3" strokeWidth={3} />
+            </span>
+          )}
+        </span>
         {entry && entry.earned > 0 && (
           <span className="text-[10px] leading-none tabular-nums opacity-90 sm:text-xs">₹{Math.round(entry.earned)}</span>
         )}
@@ -70,7 +79,8 @@ export function MonthCalendar({
       entry ? CELL[entry.status] : future ? "border-dashed text-muted-foreground/60" : "bg-card",
       day === today && "ring-2 ring-primary ring-offset-2 ring-offset-background",
     );
-    const title = `${day}: ${entry ? LABEL[entry.status] : "not marked"}`;
+    const paid = entry?.paid === "paid" ? ", paid" : entry?.paid === "part" ? ", partly paid" : "";
+    const title = `${day}: ${entry ? LABEL[entry.status] : "not marked"}${paid}`;
     return action && !future ? (
       <button key={day} type="button" className={cn(cls, "transition-transform active:scale-95")} title={title} onClick={() => setOpen(day)}>
         {body}
