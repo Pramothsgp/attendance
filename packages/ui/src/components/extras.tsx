@@ -133,6 +133,7 @@ export function StatusKey() {
       <li className="flex items-center gap-1.5"><span className="size-3 rounded border-2 border-half bg-[linear-gradient(135deg,hsl(var(--half))_50%,transparent_50%)]" />Half day</li>
       <li className="flex items-center gap-1.5"><span className="size-3 rounded border-2 border-leave" />Leave</li>
       <li className="flex items-center gap-1.5"><Check className="size-3.5 text-present" strokeWidth={3} />Day paid for</li>
+      <li className="flex items-center gap-1.5"><span className="rounded bg-primary px-1 text-[10px] font-semibold text-primary-foreground">₹</span>Payment made</li>
     </ul>
   );
 }
