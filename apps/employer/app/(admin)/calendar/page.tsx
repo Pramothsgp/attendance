@@ -58,7 +58,15 @@ export default async function Calendar({ searchParams }: { searchParams: Promise
       </div>
 
       {me && (
-        <PayStrip opening={me.opening} earned={me.earnedMonth} paid={me.salaryMonth + me.advanceMonth + me.savingMonth} bonus={me.bonusMonth} />
+        <PayStrip
+          opening={me.opening}
+          earned={me.earnedMonth}
+          salary={me.salaryMonth}
+          advance={me.advanceMonth}
+          saved={me.savingMonth}
+          bonus={me.bonusMonth}
+          savings={me.savings}
+        />
       )}
 
       <Panel className="space-y-3">

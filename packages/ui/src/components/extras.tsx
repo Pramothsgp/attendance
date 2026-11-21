@@ -45,24 +45,33 @@ export function MonthNav({ month, path, query = {} }: { month: string; path: str
 }
 
 /**
- * The ledger line for a month: carried in + earned - paid = still to pay.
- * The bar shows how much of what was owed this month has been paid.
+ * The ledger line for a month: carried in + earned - salary - advance - savings kept = still to pay.
+ * Each kind of payment is its own line, so an advance shows as paid ahead rather than vanishing into "paid".
  */
 export function PayStrip({
   opening,
   earned,
-  paid,
+  salary,
+  advance = 0,
+  saved = 0,
   bonus,
+  savings,
   worker = false,
 }: {
   opening: number;
   earned: number;
-  paid: number;
+  salary: number;
+  advance?: number;
+  /** Kept aside into savings this month. */
+  saved?: number;
   bonus?: number;
+  /** Savings held for them in all (kept aside minus given back). */
+  savings?: number;
   /** Word it for the person being paid ("to receive") instead of the employer ("to pay"). */
   worker?: boolean;
 }) {
   const owed = opening + earned;
+  const paid = salary + advance + saved;
   const due = owed - paid;
   const share = owed > 0 ? Math.min(100, Math.max(0, (paid / owed) * 100)) : paid > 0 ? 100 : 0;
   return (
@@ -84,9 +93,12 @@ export function PayStrip({
       <dl className="grid grid-cols-3 gap-2 text-sm">
         <Figure label={opening >= 0 ? "Carried in" : worker ? "Received ahead before" : "Paid ahead before"} value={rupees(Math.abs(opening))} />
         <Figure label="Earned" value={`+ ${rupees(earned)}`} />
-        <Figure label={worker ? "Received" : "Paid"} value={`− ${rupees(paid)}`} />
+        <Figure label={worker ? "Salary received" : "Salary paid"} value={`− ${rupees(salary)}`} />
+        {advance > 0 && <Figure label="Advance (paid ahead)" value={`− ${rupees(advance)}`} />}
+        {saved > 0 && <Figure label="Kept in savings" value={`− ${rupees(saved)}`} />}
       </dl>
       {bonus ? <p className="text-sm text-muted-foreground">Bonus this month: {rupees(bonus)} (extra, not counted above)</p> : null}
+      {savings ? <p className="text-sm text-muted-foreground">Savings held{worker ? " for you" : ""}: {rupees(savings)}</p> : null}
     </Panel>
   );
 }

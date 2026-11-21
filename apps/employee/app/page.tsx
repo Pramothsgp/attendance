@@ -42,7 +42,16 @@ export default async function Me({ searchParams }: { searchParams: Promise<{ mon
         <MonthNav month={month} path="/" />
       </div>
 
-      <PayStrip opening={me.opening} earned={me.earnedMonth} paid={me.salaryMonth + me.advanceMonth + me.savingMonth} bonus={me.bonusMonth} worker />
+      <PayStrip
+        opening={me.opening}
+        earned={me.earnedMonth}
+        salary={me.salaryMonth}
+        advance={me.advanceMonth}
+        saved={me.savingMonth}
+        bonus={me.bonusMonth}
+        savings={me.savings}
+        worker
+      />
 
       <Panel className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">

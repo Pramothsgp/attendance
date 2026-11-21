@@ -1,5 +1,5 @@
 import { isMonth, money, PAYMENT_LABEL, PAYMENT_TYPES, today, shortDate } from "@repo/data/pay";
-import { paymentsIn, summaries } from "@repo/data/payroll";
+import { paymentsIn, summaries, type EmployeeSummary } from "@repo/data/payroll";
 import { cn, MonthNav, Panel } from "@repo/ui";
 import Link from "next/link";
 import { addPayment, deletePayment } from "@/app/actions";
@@ -13,6 +13,24 @@ const TYPE_STYLE = {
   saving: "bg-primary/10 text-primary",
   saving_return: "bg-primary/10 text-primary",
 } as const;
+
+/** "Earned ₹12,000 − salary ₹5,000 − advance ₹8,000 = ₹1,000 paid ahead", each part only when there is one. */
+function breakdown(p: EmployeeSummary) {
+  const saved = p.paidTotal - p.salaryTotal - p.advanceTotal;
+  const parts = [
+    p.openingBalance > 0 && `opening ${money(p.openingBalance)}`,
+    `earned ${money(p.earnedTotal)}`,
+  ].filter(Boolean);
+  const minus = [
+    p.openingBalance < 0 && `owed by them ${money(-p.openingBalance)}`,
+    p.salaryTotal > 0 && `salary ${money(p.salaryTotal)}`,
+    p.advanceTotal > 0 && `advance ${money(p.advanceTotal)}`,
+    saved > 0 && `savings ${money(saved)}`,
+  ].filter(Boolean);
+  const result = p.balance > 0 ? `${money(p.balance)} to pay` : p.balance < 0 ? `${money(-p.balance)} paid ahead` : "all paid";
+  const text = [parts.join(" + "), ...minus].join(" − ");
+  return `${text.charAt(0).toUpperCase()}${text.slice(1)} = ${result}`;
+}
 
 export default async function Payments({ searchParams }: { searchParams: Promise<{ month?: string; employee?: string }> }) {
   const sp = await searchParams;
@@ -49,9 +67,12 @@ export default async function Payments({ searchParams }: { searchParams: Promise
                 <li key={p.id} className={cn("flex items-center gap-3 px-4 py-3", String(p.id) === preselect && "bg-secondary/60")}>
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-medium">{p.name}</div>
-                    <div className={cn("text-sm", p.balance > 0 ? "text-muted-foreground" : "text-present")}>
+                    <div className={cn("text-sm font-medium", p.balance > 0 ? "text-foreground" : "text-present")}>
                       {p.balance > 0 ? `${money(p.balance)} to pay` : p.balance < 0 ? `${money(-p.balance)} paid ahead` : "All paid"}
                     </div>
+                    {(p.earnedTotal > 0 || p.paidTotal > 0 || p.openingBalance !== 0) && (
+                      <div className="text-xs text-muted-foreground">{breakdown(p)}</div>
+                    )}
                     {p.savings > 0 && <div className="text-xs text-primary">Savings held: {money(p.savings)}</div>}
                   </div>
                   <Link
