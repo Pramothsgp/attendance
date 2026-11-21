@@ -116,6 +116,16 @@ export async function attendanceOn(day: string) {
   return new Map(rows.map((r) => [r.employeeId, r.status]));
 }
 
+/** One person's attendance between two days (inclusive), keyed by day. */
+export async function attendanceBetween(employeeId: number, from: string, to: string) {
+  const rows = await db
+    .select({ day: attendance.day, status: attendance.status })
+    .from(attendance)
+    .where(and(eq(attendance.employeeId, employeeId), gte(attendance.day, from), lte(attendance.day, to)))
+    .limit(31);
+  return new Map(rows.map((r) => [r.day, r.status]));
+}
+
 export function attendanceFor(employeeId: number, month: string) {
   const { from, to } = monthRange(month);
   return db

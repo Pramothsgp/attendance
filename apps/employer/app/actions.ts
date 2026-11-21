@@ -41,6 +41,13 @@ function day(form: FormData): string {
   return value;
 }
 
+// Up to a month of days in one go, for marking a person across a week.
+function days(form: FormData): string[] {
+  const values = [...new Set(form.getAll("day"))];
+  if (values.length === 0 || values.length > 31 || !values.every(isDay)) throw new Error("Invalid date");
+  return values;
+}
+
 function employeeFields(form: FormData) {
   const name = text(form, "name");
   if (!name) throw new Error("Name is required");
@@ -84,16 +91,16 @@ export async function deleteEmployee(form: FormData) {
   done();
 }
 
-/** Marks every selected active employee for one day. status "clear" removes the mark. */
+/** Marks every selected active employee on every given day. status "clear" removes the marks. */
 export async function markAttendance(form: FormData) {
   await guard();
-  const date = day(form);
+  const dates = days(form);
   const ids = [...new Set(form.getAll("ids").map(id))];
   if (ids.length === 0) return;
   const choice = form.get("status");
 
   if (choice === "clear") {
-    await db.delete(attendance).where(and(eq(attendance.day, date), inArray(attendance.employeeId, ids)));
+    await db.delete(attendance).where(and(inArray(attendance.day, dates), inArray(attendance.employeeId, ids)));
     return done();
   }
 
@@ -108,12 +115,14 @@ export async function markAttendance(form: FormData) {
   await db
     .insert(attendance)
     .values(
-      people.map((p) => ({
-        employeeId: p.id,
-        day: date,
-        status,
-        earned: dayEarning(p.payType, Number(p.rate), status).toFixed(4),
-      })),
+      people.flatMap((p) =>
+        dates.map((date) => ({
+          employeeId: p.id,
+          day: date,
+          status,
+          earned: dayEarning(p.payType, Number(p.rate), status).toFixed(4),
+        })),
+      ),
     )
     .onConflictDoUpdate({
       target: [attendance.employeeId, attendance.day],
