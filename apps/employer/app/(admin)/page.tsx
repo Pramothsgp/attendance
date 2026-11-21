@@ -65,8 +65,11 @@ export default async function Today({ searchParams }: { searchParams: Promise<{ 
       <PayStrip
         opening={sum((r) => r.opening)}
         earned={sum((r) => r.earnedMonth)}
-        paid={sum((r) => r.salaryMonth + r.advanceMonth + r.savingMonth)}
+        salary={sum((r) => r.salaryMonth)}
+        advance={sum((r) => r.advanceMonth)}
+        saved={sum((r) => r.savingMonth)}
         bonus={sum((r) => r.bonusMonth)}
+        savings={sum((r) => r.savings)}
       />
 
       {rows.length > 0 && (
