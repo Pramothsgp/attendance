@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, type ButtonProps, cn } from "@repo/ui";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
@@ -74,5 +75,24 @@ export function BulkBar({ total }: { total: number }) {
         <Button type="submit" name="status" value="clear" disabled={pending} variant="outline">Clear</Button>
       </div>
     </div>
+  );
+}
+
+/** Date input that opens the picked day straight away. `href` gets the day appended. */
+export function DayPicker({ day, max, href }: { day: string; max: string; href: string }) {
+  const router = useRouter();
+  return (
+    <input
+      key={day}
+      type="date"
+      defaultValue={day}
+      max={max}
+      aria-label="Pick a date"
+      className="rounded-md border bg-card px-2 py-0.5 text-sm"
+      onChange={(e) => {
+        const v = e.target.value;
+        if (v && v <= max) router.push(`${href}${v}`);
+      }}
+    />
   );
 }
