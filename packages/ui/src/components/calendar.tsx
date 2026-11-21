@@ -9,6 +9,12 @@ type Status = "full" | "half" | "leave";
 /** paid: covered by payments so far ("part" when the money ran out partway through the day). */
 export type CalendarDay = { day: string; status: Status; earned: number; paid?: "paid" | "part" };
 
+/** Money handed over on a day: label is the payment kind, e.g. "Salary". */
+export type CalendarPayment = { day: string; amount: number; label: string };
+
+const compact = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", notation: "compact", maximumFractionDigits: 1 });
+const full = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2, trailingZeroDisplay: "stripIfInteger" });
+
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const LABEL: Record<Status, string> = { full: "Full day", half: "Half day", leave: "Leave" };
 
@@ -26,12 +32,14 @@ export function MonthCalendar({
   month,
   today,
   days,
+  payments = [],
   action,
   employeeId,
 }: {
   month: string;
   today: string;
   days: CalendarDay[];
+  payments?: CalendarPayment[];
   action?: (form: FormData) => Promise<void>;
   employeeId?: number;
 }) {
@@ -39,6 +47,8 @@ export function MonthCalendar({
   const count = new Date(Date.UTC(y, m, 0)).getUTCDate();
   const lead = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7; // Monday first
   const byDay = new Map(days.map((d) => [d.day, d]));
+  const paidOn = new Map<string, CalendarPayment[]>();
+  for (const p of payments) paidOn.set(p.day, [...(paidOn.get(p.day) ?? []), p]);
   const [open, setOpen] = React.useState<string | null>(null);
   const [pending, start] = React.useTransition();
 
@@ -57,6 +67,8 @@ export function MonthCalendar({
   const cells = Array.from({ length: count }, (_, i) => {
     const day = `${month}-${String(i + 1).padStart(2, "0")}`;
     const entry = byDay.get(day);
+    const given = paidOn.get(day);
+    const givenTotal = given?.reduce((t, p) => t + p.amount, 0) ?? 0;
     const future = day > today;
     const body = (
       <>
@@ -72,6 +84,11 @@ export function MonthCalendar({
           <span className="text-[10px] leading-none tabular-nums opacity-90 sm:text-xs">₹{Math.round(entry.earned)}</span>
         )}
         {entry?.status === "leave" && <span className="text-[10px] font-medium leading-none sm:text-xs">Leave</span>}
+        {given && (
+          <span className="-mx-0.5 truncate rounded bg-primary px-0.5 text-center text-[10px] font-semibold leading-tight text-primary-foreground tabular-nums sm:text-xs">
+            {compact.format(givenTotal)}
+          </span>
+        )}
       </>
     );
     const cls = cn(
@@ -80,7 +97,8 @@ export function MonthCalendar({
       day === today && "ring-2 ring-primary ring-offset-2 ring-offset-background",
     );
     const paid = entry?.paid === "paid" ? ", paid" : entry?.paid === "part" ? ", partly paid" : "";
-    const title = `${day}: ${entry ? LABEL[entry.status] : "not marked"}${paid}`;
+    const money = given ? `. Paid on this day: ${given.map((p) => `${p.label} ${full.format(p.amount)}`).join(", ")}` : "";
+    const title = `${day}: ${entry ? LABEL[entry.status] : "not marked"}${paid}${money}`;
     return action && !future ? (
       <button key={day} type="button" className={cn(cls, "transition-transform active:scale-95")} title={title} onClick={() => setOpen(day)}>
         {body}
@@ -117,6 +135,7 @@ export function MonthCalendar({
               </DialogPrimitive.Title>
               <DialogPrimitive.Description className="text-sm text-muted-foreground">
                 {open && byDay.get(open) ? `Marked as ${LABEL[byDay.get(open)!.status].toLowerCase()}.` : "Not marked yet."}
+                {open && paidOn.get(open) ? ` Paid: ${paidOn.get(open)!.map((p) => `${p.label} ${full.format(p.amount)}`).join(", ")}.` : ""}
               </DialogPrimitive.Description>
               <div className="grid grid-cols-3 gap-2">
                 <SheetButton disabled={pending} onClick={() => mark("full")} className="bg-present text-white dark:text-background">Full day</SheetButton>

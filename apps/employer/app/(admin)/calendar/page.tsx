@@ -79,6 +79,7 @@ export default async function Calendar({ searchParams }: { searchParams: Promise
           employeeId={picked.id}
           action={markAttendance}
           days={days}
+          payments={paid.filter((p) => p.type !== "saving").map((p) => ({ day: p.day, amount: Number(p.amount), label: PAYMENT_LABEL[p.type] }))}
         />
         <p className="text-xs text-muted-foreground">Tap a day to mark or change it.</p>
       </Panel>

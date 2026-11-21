@@ -61,7 +61,12 @@ export default async function Me({ searchParams }: { searchParams: Promise<{ mon
             {me.full} full, {me.half} half, {me.leave} leave
           </span>
         </div>
-        <MonthCalendar month={month} today={now} days={days} />
+        <MonthCalendar
+          month={month}
+          today={now}
+          days={days}
+          payments={paid.filter((p) => p.type !== "saving").map((p) => ({ day: p.day, amount: Number(p.amount), label: PAYMENT_LABEL[p.type] }))}
+        />
       </Panel>
 
       <section className="space-y-2">
