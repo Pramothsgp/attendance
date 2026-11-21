@@ -4,7 +4,9 @@ import { boolean, date, index, integer, numeric, pgEnum, pgTable, primaryKey, se
 export const payType = pgEnum("pay_type", ["daily", "monthly"]);
 export const attendanceStatus = pgEnum("attendance_status", ["full", "half", "leave"]);
 // advance = money given ahead of earnings (a debt). It counts against the balance like salary.
-export const paymentType = pgEnum("payment_type", ["salary", "bonus", "advance"]);
+// saving = pay kept aside for the worker (counts against the balance, goes into their savings).
+// saving_return = savings handed back (only lowers savings, not the balance).
+export const paymentType = pgEnum("payment_type", ["salary", "bonus", "advance", "saving", "saving_return"]);
 
 export const employee = pgTable("employee", {
   id: serial("id").primaryKey(),
@@ -13,6 +15,8 @@ export const employee = pgTable("employee", {
   payType: payType("pay_type").notNull(),
   // Daily wage, or monthly salary (a month counts as 30 days).
   rate: numeric("rate", { precision: 12, scale: 2 }).notNull(),
+  // Owed from before the app was used: positive = owed to them, negative = they owe.
+  openingBalance: numeric("opening_balance", { precision: 12, scale: 2 }).notNull().default("0"),
   active: boolean("active").notNull().default(true),
   // Sign-in account that sees this employee in the employee app. One account per employee.
   userId: text("user_id")

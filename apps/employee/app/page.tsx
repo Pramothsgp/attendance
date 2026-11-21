@@ -1,11 +1,9 @@
 import { SignOutButton } from "@repo/auth/components";
 import { requireSession } from "@repo/auth/next";
-import { isMonth, money, today, shortDate } from "@repo/data/pay";
+import { isMonth, money, PAYMENT_LABEL, today, shortDate } from "@repo/data/pay";
 import { attendanceFor, employeeForUser, paymentsIn, summaries } from "@repo/data/payroll";
 import { InstallHint, MonthCalendar, MonthNav, Panel, PayStrip, StatusKey } from "@repo/ui";
 import { auth } from "@/lib/auth";
-
-const TYPE_LABEL = { salary: "Salary", bonus: "Bonus", advance: "Advance" } as const;
 
 export default async function Me({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
   const session = await requireSession(auth());
@@ -44,7 +42,7 @@ export default async function Me({ searchParams }: { searchParams: Promise<{ mon
         <MonthNav month={month} path="/" />
       </div>
 
-      <PayStrip opening={me.opening} earned={me.earnedMonth} paid={me.salaryMonth + me.advanceMonth} bonus={me.bonusMonth} worker />
+      <PayStrip opening={me.opening} earned={me.earnedMonth} paid={me.salaryMonth + me.advanceMonth + me.savingMonth} bonus={me.bonusMonth} worker />
 
       <Panel className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -65,7 +63,7 @@ export default async function Me({ searchParams }: { searchParams: Promise<{ mon
             {paid.map((p) => (
               <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-3">
                 <div>
-                  <div className="font-medium">{TYPE_LABEL[p.type]}</div>
+                  <div className="font-medium">{PAYMENT_LABEL[p.type]}</div>
                   <div className="text-xs text-muted-foreground">
                     {shortDate(p.day)}
                     {p.note ? `, ${p.note}` : ""}
