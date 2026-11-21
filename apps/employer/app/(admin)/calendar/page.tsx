@@ -20,11 +20,8 @@ export default async function Calendar({ searchParams }: { searchParams: Promise
     );
   }
   const picked = people.find((p) => p.id === Number(sp.employee)) ?? people[0]!;
-  const [[me], days, paid] = await Promise.all([
-    summaries(month, picked.id),
-    attendanceFor(picked.id, month),
-    paymentsIn(month, picked.id),
-  ]);
+  const [[me], paid] = await Promise.all([summaries(month, picked.id), paymentsIn(month, picked.id)]);
+  const days = await attendanceFor(picked.id, month, me ? me.paidTotal - me.openingBalance : 0);
 
   return (
     <>
@@ -81,7 +78,7 @@ export default async function Calendar({ searchParams }: { searchParams: Promise
           today={now}
           employeeId={picked.id}
           action={markAttendance}
-          days={days.map((d) => ({ day: d.day, status: d.status, earned: Number(d.earned) }))}
+          days={days}
         />
         <p className="text-xs text-muted-foreground">Tap a day to mark or change it.</p>
       </Panel>

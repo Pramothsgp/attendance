@@ -16,6 +16,16 @@ export const PAYMENT_LABEL: Record<PaymentType, string> = {
 
 const DAYS_IN_PAY_MONTH = 30;
 
+/**
+ * Whether a worked day is covered by what has been paid. Payments clear the oldest
+ * earnings first: `before` is everything earned up to the day before, `credit` is
+ * all salary, advances and savings kept, less any opening balance owed to them.
+ */
+export function paidState(before: number, earned: number, credit: number): "paid" | "part" | undefined {
+  if (earned <= 0 || credit <= before) return undefined;
+  return credit >= before + earned - 0.005 ? "paid" : "part";
+}
+
 /** What one marked day earns. Monthly salary is paid per day as salary / 30. */
 export function dayEarning(type: PayType, rate: number, status: Status): number {
   const perDay = type === "daily" ? rate : rate / DAYS_IN_PAY_MONTH;

@@ -26,8 +26,9 @@ export default async function Me({ searchParams }: { searchParams: Promise<{ mon
   const sp = await searchParams;
   const month = isMonth(sp.month) ? sp.month : now.slice(0, 7);
 
-  const [[me], days, paid] = await Promise.all([summaries(month, id), attendanceFor(id, month), paymentsIn(month, id)]);
+  const [[me], paid] = await Promise.all([summaries(month, id), paymentsIn(month, id)]);
   if (!me) return null;
+  const days = await attendanceFor(id, month, me.paidTotal - me.openingBalance);
 
   return (
     <>
@@ -60,7 +61,7 @@ export default async function Me({ searchParams }: { searchParams: Promise<{ mon
             {me.full} full, {me.half} half, {me.leave} leave
           </span>
         </div>
-        <MonthCalendar month={month} today={now} days={days.map((d) => ({ day: d.day, status: d.status, earned: Number(d.earned) }))} />
+        <MonthCalendar month={month} today={now} days={days} />
       </Panel>
 
       <section className="space-y-2">
