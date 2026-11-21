@@ -40,8 +40,11 @@ export function isMonth(value: unknown): value is string {
   return typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
 }
 
+// Whole rupees show no ".00"; paise show only when there are some.
+const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2, trailingZeroDisplay: "stripIfInteger" });
+
 export function money(value: number): string {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(value);
+  return inr.format(value);
 }
 
 /** "2026-11-15" -> "15 Nov" */

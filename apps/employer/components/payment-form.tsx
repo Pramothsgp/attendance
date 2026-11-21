@@ -5,11 +5,11 @@ import { useEffect, useRef, useState, useTransition } from "react";
 
 type Person = { id: number; name: string; balance: number };
 
-const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
+const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2, trailingZeroDisplay: "stripIfInteger" });
 
-/** What to pre-fill for a person: what they're owed, or nothing if they've been paid ahead. */
+/** What to pre-fill for a person: what they're owed (paise only if any), or nothing if they've been paid ahead. */
 export function payable(person: Person | undefined): string {
-  return person && person.balance > 0 ? person.balance.toFixed(2) : "";
+  return person && person.balance > 0 ? String(Math.round(person.balance * 100) / 100) : "";
 }
 
 /**
