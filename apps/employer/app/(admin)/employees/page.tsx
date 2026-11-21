@@ -6,9 +6,10 @@ import Link from "next/link";
 import { createEmployee, deleteEmployee, setActive, updateEmployee } from "@/app/actions";
 import { ConfirmButton, SubmitButton } from "@/components/client";
 
-type Defaults = { name?: string; phone?: string | null; payType?: string; rate?: string };
+type Defaults = { name?: string; phone?: string | null; payType?: string; rate?: string; openingBalance?: string };
 
 function EmployeeFields({ d = {}, prefix }: { d?: Defaults; prefix: string }) {
+  const opening = Number(d.openingBalance ?? 0);
   return (
     <>
       <div className="space-y-1.5">
@@ -34,6 +35,32 @@ function EmployeeFields({ d = {}, prefix }: { d?: Defaults; prefix: string }) {
       <div className="space-y-1.5">
         <Label htmlFor={`${prefix}-rate`}>Amount per day or month (₹)</Label>
         <Input id={`${prefix}-rate`} name="rate" type="number" inputMode="decimal" min="0.01" step="0.01" required defaultValue={d.rate} className="h-11 text-base" />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor={`${prefix}-opening`}>Opening balance (₹)</Label>
+        <Input
+          id={`${prefix}-opening`}
+          name="opening"
+          type="number"
+          inputMode="decimal"
+          min="0"
+          step="0.01"
+          placeholder="0"
+          defaultValue={opening ? String(Math.abs(opening)) : ""}
+          className="h-11 text-base"
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor={`${prefix}-owed`}>Opening balance is</Label>
+        <Picker
+          id={`${prefix}-owed`}
+          name="openingOwedBy"
+          defaultValue={opening < 0 ? "worker" : "employer"}
+          options={[
+            { value: "employer", label: "Owed to them", hint: "from before" },
+            { value: "worker", label: "Owed by them", hint: "e.g. an old loan" },
+          ]}
+        />
       </div>
     </>
   );
@@ -89,6 +116,11 @@ export default async function Employees() {
                   {money(Number(p.rate))} per {p.payType === "daily" ? "day" : "month"}
                   {p.phone ? `, ${p.phone}` : ""}
                 </div>
+                {Number(p.openingBalance) !== 0 && (
+                  <div className="text-xs text-muted-foreground">
+                    Opening balance: {money(Math.abs(Number(p.openingBalance)))} {Number(p.openingBalance) > 0 ? "owed to them" : "owed by them"}
+                  </div>
+                )}
                 <Link href="/users" className={cn("text-xs", p.email ? "text-muted-foreground" : "text-primary")}>
                   {p.email ? `Login: ${p.email}` : "No login linked"}
                 </Link>

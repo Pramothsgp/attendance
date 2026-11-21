@@ -1,10 +1,18 @@
 // Pure pay rules, shared by both apps and the queries.
 export const PAY_TYPES = ["daily", "monthly"] as const;
 export const STATUSES = ["full", "half", "leave"] as const;
-export const PAYMENT_TYPES = ["salary", "bonus", "advance"] as const;
+export const PAYMENT_TYPES = ["salary", "bonus", "advance", "saving", "saving_return"] as const;
 export type PayType = (typeof PAY_TYPES)[number];
 export type Status = (typeof STATUSES)[number];
 export type PaymentType = (typeof PAYMENT_TYPES)[number];
+
+export const PAYMENT_LABEL: Record<PaymentType, string> = {
+  salary: "Salary",
+  bonus: "Bonus",
+  advance: "Advance",
+  saving: "Into savings",
+  saving_return: "Savings given back",
+};
 
 const DAYS_IN_PAY_MONTH = 30;
 

@@ -48,6 +48,16 @@ function days(form: FormData): string[] {
   return values;
 }
 
+/** Signed: positive = owed to the worker, negative = owed by them. Blank means none. */
+function openingBalance(form: FormData): number {
+  const raw = form.get("opening");
+  if (raw === null || raw === "") return 0;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0 || n > 1e9) throw new Error("Opening balance must be zero or more");
+  const amount = Math.round(n * 100) / 100;
+  return form.get("openingOwedBy") === "worker" ? -amount : amount;
+}
+
 function employeeFields(form: FormData) {
   const name = text(form, "name");
   if (!name) throw new Error("Name is required");
@@ -56,6 +66,7 @@ function employeeFields(form: FormData) {
     phone: text(form, "phone", 30) || null,
     payType: oneOf<PayType>(PAY_TYPES, form.get("payType"), "pay type"),
     rate: positive(form, "rate").toFixed(2),
+    openingBalance: openingBalance(form).toFixed(2),
   };
 }
 

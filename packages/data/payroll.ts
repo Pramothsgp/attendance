@@ -19,12 +19,17 @@ export type EmployeeSummary = {
   earnedMonth: number;
   salaryMonth: number;
   advanceMonth: number;
+  savingMonth: number; // kept aside into savings this month
   bonusMonth: number;
+  openingBalance: number; // owed from before the app; negative means they owed
   earnedTotal: number;
-  paidTotal: number; // salary + advance, all time
+  salaryTotal: number;
+  advanceTotal: number;
+  paidTotal: number; // salary + advance + savings kept, all time
   bonusTotal: number;
-  balance: number; // earnedTotal - paidTotal; negative means the worker owes money
-  opening: number; // still to pay at the start of the month (earned - salary - advances before it)
+  savings: number; // kept aside minus given back: what is held for them
+  balance: number; // openingBalance + earnedTotal - paidTotal; negative means paid ahead
+  opening: number; // still to pay at the start of the month
 };
 
 /** Month figures plus the all-time balance, for active employees (or one employee). */
@@ -34,13 +39,15 @@ export async function summaries(month: string, employeeId?: number): Promise<Emp
   const before = sql`day < ${from}`;
   const filter = employeeId === undefined ? sql`e.active` : sql`e.id = ${employeeId} and e.active`;
   const { rows } = await db.execute(sql`
-    select e.id, e.name, e.phone, e.pay_type, e.rate,
+    select e.id, e.name, e.phone, e.pay_type, e.rate, e.opening_balance,
       coalesce(a.full_days, 0) as full_days, coalesce(a.half_days, 0) as half_days, coalesce(a.leave_days, 0) as leave_days,
       coalesce(a.earned_month, 0) as earned_month, coalesce(a.earned_total, 0) as earned_total,
       coalesce(p.salary_month, 0) as salary_month, coalesce(p.advance_month, 0) as advance_month,
-      coalesce(p.bonus_month, 0) as bonus_month, coalesce(p.paid_total, 0) as paid_total,
-      coalesce(p.bonus_total, 0) as bonus_total,
-      coalesce(a.earned_before, 0) - coalesce(p.paid_before, 0) as opening
+      coalesce(p.saving_month, 0) as saving_month, coalesce(p.bonus_month, 0) as bonus_month,
+      coalesce(p.salary_total, 0) as salary_total, coalesce(p.advance_total, 0) as advance_total,
+      coalesce(p.paid_total, 0) as paid_total, coalesce(p.bonus_total, 0) as bonus_total,
+      coalesce(p.savings, 0) as savings,
+      e.opening_balance + coalesce(a.earned_before, 0) - coalesce(p.paid_before, 0) as opening
     from employee e
     left join (
       select employee_id,
@@ -56,10 +63,14 @@ export async function summaries(month: string, employeeId?: number): Promise<Emp
       select employee_id,
         sum(amount) filter (where type = 'salary' and ${inMonth}) as salary_month,
         sum(amount) filter (where type = 'advance' and ${inMonth}) as advance_month,
+        sum(amount) filter (where type = 'saving' and ${inMonth}) as saving_month,
         sum(amount) filter (where type = 'bonus' and ${inMonth}) as bonus_month,
-        sum(amount) filter (where type <> 'bonus') as paid_total,
+        sum(amount) filter (where type = 'salary') as salary_total,
+        sum(amount) filter (where type = 'advance') as advance_total,
+        sum(amount) filter (where type in ('salary', 'advance', 'saving')) as paid_total,
         sum(amount) filter (where type = 'bonus') as bonus_total,
-        sum(amount) filter (where type <> 'bonus' and ${before}) as paid_before
+        sum(case type when 'saving' then amount when 'saving_return' then -amount else 0 end) as savings,
+        sum(amount) filter (where type in ('salary', 'advance', 'saving') and ${before}) as paid_before
       from payment group by employee_id
     ) p on p.employee_id = e.id
     where ${filter}
@@ -69,6 +80,7 @@ export async function summaries(month: string, employeeId?: number): Promise<Emp
   return rows.map((r) => {
     const earnedTotal = Number(r.earned_total);
     const paidTotal = Number(r.paid_total);
+    const openingBalance = Number(r.opening_balance);
     return {
       id: Number(r.id),
       name: String(r.name),
@@ -81,11 +93,16 @@ export async function summaries(month: string, employeeId?: number): Promise<Emp
       earnedMonth: Number(r.earned_month),
       salaryMonth: Number(r.salary_month),
       advanceMonth: Number(r.advance_month),
+      savingMonth: Number(r.saving_month),
       bonusMonth: Number(r.bonus_month),
+      openingBalance,
       earnedTotal,
+      salaryTotal: Number(r.salary_total),
+      advanceTotal: Number(r.advance_total),
       paidTotal,
       bonusTotal: Number(r.bonus_total),
-      balance: Math.round((earnedTotal - paidTotal) * 100) / 100,
+      savings: Number(r.savings),
+      balance: Math.round((openingBalance + earnedTotal - paidTotal) * 100) / 100,
       opening: Math.round(Number(r.opening) * 100) / 100,
     };
   });

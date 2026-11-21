@@ -3,7 +3,7 @@
 import { Button, Input, Label, Picker } from "@repo/ui";
 import { useEffect, useRef, useState, useTransition } from "react";
 
-type Person = { id: number; name: string; balance: number };
+type Person = { id: number; name: string; balance: number; savings: number };
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2, trailingZeroDisplay: "stripIfInteger" });
 
@@ -79,7 +79,9 @@ export function PaymentForm({
           options={people.map((p) => ({
             value: String(p.id),
             label: p.name,
-            hint: p.balance >= 0 ? `${inr.format(p.balance)} to pay` : `${inr.format(-p.balance)} paid ahead`,
+            hint:
+              (p.balance >= 0 ? `${inr.format(p.balance)} to pay` : `${inr.format(-p.balance)} paid ahead`) +
+              (p.savings > 0 ? `, ${inr.format(p.savings)} saved` : ""),
           }))}
         />
       </div>
@@ -108,6 +110,8 @@ export function PaymentForm({
             { value: "salary", label: "Salary" },
             { value: "advance", label: "Advance or loan" },
             { value: "bonus", label: "Bonus" },
+            { value: "saving", label: "Put into savings", hint: "kept from their pay" },
+            { value: "saving_return", label: "Give savings back" },
           ]}
         />
       </div>

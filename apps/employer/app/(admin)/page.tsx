@@ -65,7 +65,7 @@ export default async function Today({ searchParams }: { searchParams: Promise<{ 
       <PayStrip
         opening={sum((r) => r.opening)}
         earned={sum((r) => r.earnedMonth)}
-        paid={sum((r) => r.salaryMonth + r.advanceMonth)}
+        paid={sum((r) => r.salaryMonth + r.advanceMonth + r.savingMonth)}
         bonus={sum((r) => r.bonusMonth)}
       />
 
@@ -74,7 +74,7 @@ export default async function Today({ searchParams }: { searchParams: Promise<{ 
           <h2 className="text-xl font-semibold">People</h2>
           <ul className="divide-y overflow-hidden rounded-2xl border bg-card">
             {rows.map((r) => {
-              const due = r.opening + r.earnedMonth - r.salaryMonth - r.advanceMonth;
+              const due = r.opening + r.earnedMonth - r.salaryMonth - r.advanceMonth - r.savingMonth;
               const status = marks.get(r.id);
               return (
                 <li key={r.id}>

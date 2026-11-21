@@ -1,4 +1,4 @@
-import { isMonth, money, today, shortDate } from "@repo/data/pay";
+import { isMonth, money, PAYMENT_LABEL, today, shortDate } from "@repo/data/pay";
 import { activeEmployees, attendanceFor, paymentsIn, summaries } from "@repo/data/payroll";
 import { Button, cn, MonthCalendar, MonthNav, Panel, PayStrip, StatusKey } from "@repo/ui";
 import Link from "next/link";
@@ -58,7 +58,7 @@ export default async function Calendar({ searchParams }: { searchParams: Promise
       </div>
 
       {me && (
-        <PayStrip opening={me.opening} earned={me.earnedMonth} paid={me.salaryMonth + me.advanceMonth} bonus={me.bonusMonth} />
+        <PayStrip opening={me.opening} earned={me.earnedMonth} paid={me.salaryMonth + me.advanceMonth + me.savingMonth} bonus={me.bonusMonth} />
       )}
 
       <Panel className="space-y-3">
@@ -92,7 +92,7 @@ export default async function Calendar({ searchParams }: { searchParams: Promise
             {paid.map((p) => (
               <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-3">
                 <div>
-                  <div className="font-medium capitalize">{p.type}</div>
+                  <div className="font-medium">{PAYMENT_LABEL[p.type]}</div>
                   <div className="text-xs text-muted-foreground">
                     {shortDate(p.day)}
                     {p.note ? `, ${p.note}` : ""}
